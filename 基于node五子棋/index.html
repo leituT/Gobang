@@ -1,0 +1,296 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link href="index.css" rel="stylesheet" />
+    <script src="socket.io.js"></script>
+    <script>
+        function $(id) {
+            return document.getElementById(id);
+        }
+        if (typeof String.prototype.trim !== "function") {
+            String.prototype.trim = function (str) {
+                return this.replace(/(^\s+)|(\s+$)/g, "");
+            }
+        }
+        window.onload = function () {
+
+            var rr = 15, cc = 15;
+
+            //存放黑白棋子的数据
+            var aradiusList = [];
+            var omain = document.getElementById("main"),
+                oLineList = document.getElementById("LineList"),
+                oradiusList = document.getElementById("radiusList"),
+                oChessList = document.getElementById("ChessList");
+
+            //当前是黑子还是白子
+            var nw = 1;
+
+            var currentnw = 1;
+
+            //总共走了多少步
+            var count = 0;
+
+            var socket = io.connect('http://192.168.1.30:3000', { "reconnection": false, "reconnections": 1000 });
+            //连接失败
+            socket.on("connect_error", function () {
+                alert("无法链接到服务器,请刷新");
+                socket = null;
+            });
+
+            var obtnSave = $("btnSave"),
+                ouserName = $("userName"),
+                olayer = $("layer"),
+                oContent = $("Content");
+            var islogin = true;
+            var userobj = {};
+
+            var isclick = true;
+
+            obtnSave.onclick = function () {
+                if (socket) {
+                    var sname = ouserName.value.trim();
+                    if (sname.length < 1) {
+                        alert("请输入聊天呢称");
+                        ouserName.focus();
+                        return false;
+                    }
+                    userobj = {
+                        name: sname,
+                        userid: new Date().getTime()
+                    }
+                    socket.emit('login', userobj);
+                    if (islogin) {
+                        //登录错误
+                        socket.on('loginerr', function (data) {
+                            alert(data);
+                            ouserName.focus();
+                        });
+                        //登录成功
+                        socket.on('loginsuess', function (n) {
+                            olayer.style.display = "none";
+                            oContent.style.display = "block";
+                            nw = n;
+                            currentnw = n;
+                            alert(nw == 1 ? "你持黑子" : "你持白子");
+                            createChess();
+                        });
+                        socket.on("msg", function (user, top, left) {
+                            var odiv = document.createElement("div");
+                            odiv.style.top = top;
+                            odiv.style.left = left;
+                            odiv.className = nw == 2 ? "black" : "white";
+                            oChessList.appendChild(odiv);
+                            isclick = true;
+                        });
+                        socket.on("msg2", function (msg) {
+                            alert(msg);
+                        });
+                        islogin = false;
+                    }
+                }
+            };
+
+            //回车快捷操作
+            ouserName.onkeyup = function (ev) {
+                var oEv = ev || window.event;
+                if (oEv.keyCode == 13) {
+                    obtnSave.onclick();
+                }
+            }
+            oradiusList.addEventListener("click", function (ev) {
+                if (!isclick) {
+                    return false;
+                }
+                var obj = ev.target;
+                if (obj.tagName == "SPAN" && obj.className == "") {
+                    isclick = false;
+                    count++;
+                    var odiv = document.createElement("div");
+                    odiv.style.top = obj.style.top;
+                    odiv.style.left = obj.style.left;
+                    oChessList.appendChild(odiv);
+
+                    odiv.className = nw == 2 ? "white" : "black";
+
+                    var index = obj.index.split(":");
+                    var cr = parseInt(index[0]), cc = parseInt(index[1]);
+
+                    aradiusList[cr][cc] = nw;
+
+                    socket.emit("msg", userobj, obj.style.top, obj.style.left);
+
+                    var bcount = test(cr, cc, nw);
+                    if (bcount >= 5) {
+                        socket.emit('msg2', "result");
+                        setTimeout(function () {
+                            alert("恭喜你您赢了");
+                        }, 10);
+                    }
+                }
+            }, false);
+
+            //每下一步判断是否已经赢了
+            function test(cr, cc, nw) {
+                var bcount = 1;
+                //判断竖排是否有5个了
+                if (bcount < 5) {
+                    var y = cr - 1;
+                    while (y > cr - 5 && y >= 0) {
+                        if (aradiusList[y][cc] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        y--;
+                    }
+                    y = cr + 1;
+                    while (y < cr + 5 && y < aradiusList.length) {
+                        if (aradiusList[y][cc] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        y++;
+                    }
+                }
+
+                //判断横排是否有5个了
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc - 1;
+                    while (x > cc - 5 && x >= 0) {
+                        if (aradiusList[cr][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                    }
+                    x = cc + 1;
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (aradiusList[cr][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                    }
+                }
+
+                //判断左边的斜排
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc - 1;
+                    var y = cr - 1;
+                    //左上角
+                    while (x > cc - 5 && x >= 0) {
+                        if (y < 0 || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                        y--;
+                    }
+                    x = cc + 1;
+                    y = cr + 1;
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (y >= aradiusList.length || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                        y++;
+                    }
+                }
+
+                //判断右边的斜排
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc + 1;
+                    var y = cr - 1;
+                    //右上角
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (y < 0 || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                        y--;
+                    }
+                    x = cc - 1;
+                    y = cr + 1;
+                    while (x > cc - 5 && x >= 0) {
+                        if (y >= aradiusList.length || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                        y++;
+                    }
+                }
+
+                return bcount;
+            }
+
+            //创建棋盘
+            function createChess() {
+
+                var w = oLineList.offsetWidth, h = oLineList.offsetHeight;
+
+                var r = h / rr, c = w / cc;
+
+                for (var i = 1; i < rr; i++) {
+
+                    var odiv = document.createElement("div");
+
+                    odiv.style.cssText = "width:100%;height:2px;top:" + i * r + "px;";
+
+                    oLineList.appendChild(odiv);
+                }
+                for (var i = 1; i < cc; i++) {
+
+                    var odiv = document.createElement("div");
+
+                    odiv.style.cssText = "width:2px;height:100%;left:" + i * c + "px;";
+
+                    oLineList.appendChild(odiv);
+                }
+
+                var ofragment = document.createDocumentFragment();
+
+                for (var i = 1; i < rr; i++) {
+                    var acradiusList = [];
+                    for (var j = 1; j < cc; j++) {
+                        var ospan = document.createElement("span");
+                        ospan.style.cssText = "top:" + i * c + "px;left:" + j * r + "px";
+                        ospan.index = (i - 1) + ":" + (j - 1);
+                        ofragment.appendChild(ospan);
+                        acradiusList.push(0);
+                    }
+                    aradiusList.push(acradiusList);
+                }
+
+                oradiusList.appendChild(ofragment);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="layer" id="layer">
+        <input type="text" id="userName" autofocus placeholder="请设置呢称" /><input id="btnSave" type="button" value="提交" />
+        <span class="tip">请设置呢称</span>
+    </div>
+    <div id="Content">
+    <div id="main">
+        <div id="LineList">
+
+        </div>
+        <div id="radiusList">
+
+        </div>
+        <div id="ChessList">
+
+        </div>
+    </div>
+    </div>
+</body>
+</html>

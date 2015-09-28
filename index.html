@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <style>
+        li{list-style:none;}
+        #main{
+            border:1px solid #ccc;
+            width:450px;
+            height:450px;
+            position:relative;
+        }
+        #LineList, #radiusList { width: 100%; height: 100%; position: relative; }
+        #LineList div { position: absolute; background-color: #ccc; }
+        #radiusList span { width: 14px; height: 14px; margin: -7px 0 0 -7px; position: absolute; opacity: 0; cursor: pointer; border-radius: 10px;background-color: #000; }
+        #radiusList span:hover{opacity:1;border:1px solid #f00;box-shadow:0 0 3px rgba(255,0,0,.4);background-color:#fff;}
+        #radiusList { position: absolute; top: 0; left: 0; }
+        #ChessList div{position:absolute;width:28px;height:28px;border-radius:20px;margin:-14px 0 0 -14px;}
+        #ChessList div.white { background: -webkit-radial-gradient(circle,#fff 3px,#bababa); }
+        #ChessList div.black{background-color:black;}
+    </style>
+    <script>
+        window.onload = function () {
+
+            var rr = 15, cc = 15;
+
+            //存放黑白棋子的数据
+            var aradiusList = [];
+            var omain = document.getElementById("main"),
+                oLineList = document.getElementById("LineList"),
+                oradiusList = document.getElementById("radiusList"),
+                oChessList = document.getElementById("ChessList");
+
+            createChess();
+
+            //当前是黑子还是白子
+            var nw = 1;
+
+            //总共走了多少步
+            var count = 0;
+            oradiusList.addEventListener("click", function (ev) {
+                var obj = ev.target;
+                if (obj.tagName == "SPAN" && obj.className == "") {
+                    count++;
+                    var odiv = document.createElement("div");
+                    odiv.style.top = obj.style.top;
+                    odiv.style.left = obj.style.left;
+                    oChessList.appendChild(odiv);
+
+                    odiv.className = nw == 2 ? "white" : "black";
+
+                    var index = obj.index.split(":");
+                    var cr = parseInt(index[0]), cc = parseInt(index[1]);
+
+                    aradiusList[cr][cc] = nw;
+
+                    if (count > 8) {
+                        var bcount = test(cr, cc, nw);
+                        if (bcount >= 5) {
+                            if (nw == 1) {
+                                alert("黑子赢");
+                            } else if (nw == 2) {
+                                alert("白子赢");
+                            }
+                        }
+                    }
+                    nw = nw == 1 ? 2 : 1;
+                }
+            }, false);
+
+            //没下一步判断是否已经赢了
+            function test(cr, cc, nw) {
+                var bcount = 1;
+                //判断竖排是否有5个了
+                if (bcount < 5) {
+                    var y = cr - 1;
+                    while (y > cr - 5 && y >= 0) {
+                        if (aradiusList[y][cc] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        y--;
+                    }
+                    y = cr + 1;
+                    while (y < cr + 5 && y < aradiusList.length) {
+                        if (aradiusList[y][cc] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        y++;
+                    }
+                }
+
+                //判断横排是否有5个了
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc - 1;
+                    while (x > cc - 5 && x >= 0) {
+                        if (aradiusList[cr][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                    }
+                    x = cc + 1;
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (aradiusList[cr][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                    }
+                }
+
+                //判断左边的斜排
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc - 1;
+                    var y = cr - 1;
+                    //左上角
+                    while (x > cc - 5 && x >= 0) {
+                        if (y < 0 || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                        y--;
+                    }
+                    x = cc + 1;
+                    y = cr + 1;
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (y >= aradiusList.length || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                        y++;
+                    }
+                }
+
+                //判断右边的斜排
+                if (bcount < 5) {
+                    bcount = 1;
+                    var x = cc + 1;
+                    var y = cr - 1;
+                    //右上角
+                    while (x < cc + 5 && x < aradiusList[0].length) {
+                        if (y < 0 || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x++;
+                        y--;
+                    }
+                    x = cc - 1;
+                    y = cr + 1;
+                    while (x > cc - 5 && x >= 0) {
+                        if (y >= aradiusList.length || aradiusList[y][x] != nw) {
+                            break;
+                        }
+                        bcount++;
+                        x--;
+                        y++;
+                    }
+                }
+
+                return bcount;
+            }
+
+            //创建棋盘
+            function createChess() {
+
+                var w = oLineList.offsetWidth, h = oLineList.offsetHeight;
+
+                var r = h / rr, c = w / cc;
+
+                for (var i = 1; i < rr; i++) {
+
+                    var odiv = document.createElement("div");
+
+                    odiv.style.cssText = "width:100%;height:1px;top:" + i * r + "px;";
+
+                    oLineList.appendChild(odiv);
+                }
+                for (var i = 1; i < cc; i++) {
+
+                    var odiv = document.createElement("div");
+
+                    odiv.style.cssText = "width:1px;height:100%;left:" + i * c + "px;";
+
+                    oLineList.appendChild(odiv);
+                }
+
+                var ofragment = document.createDocumentFragment();
+
+                for (var i = 1; i < rr; i++) {
+                    var acradiusList = [];
+                    for (var j = 1; j < cc; j++) {
+                        var ospan = document.createElement("span");
+                        ospan.style.cssText = "top:" + i * c + "px;left:" + j * r + "px";
+                        ospan.index = (i - 1) + ":" + (j - 1);
+                        ofragment.appendChild(ospan);
+                        acradiusList.push(0);
+                    }
+                    aradiusList.push(acradiusList);
+                }
+
+                oradiusList.appendChild(ofragment);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="main">
+        <div id="LineList">
+
+        </div>
+        <div id="radiusList">
+
+        </div>
+        <div id="ChessList">
+
+        </div>
+    </div>
+</body>
+</html>

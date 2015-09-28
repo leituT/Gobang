@@ -1,0 +1,17 @@
+body{margin:0;padding:0}ul,ol,h1,h2,h3,h4,p{margin:0;padding:0}li{list-style:none}
+.layer{position:fixed;height:100%;width:100%;text-align:center;background-color:rgba(0,0,0,0.5)}
+.layer input{position:relative;top:50%;margin-top:-20px;border:none;padding:10px;outline:none;font-size:15px;font-family:'Microsoft YaHei' Arial}
+.layer .tip{position:absolute;top:50%;margin-top:-50px;font-family:'Microsoft YaHei' Arial;background-color:#000;border-radius:6px;color:#fff;font-size:13px;padding:0 8px 1px 8px;line-height:26px;margin-left:-176px;display:none}
+.layer .tip:after{content:"";position:absolute;left:50%;top:100%;border:6px solid transparent;border-top-color:#000;border-bottom:0;margin-left:-6px}
+#userName{border-radius:5px 0 0 5px}
+#btnSave{border-radius:0 5px 5px 0;cursor:pointer;border-left:1px solid #a2a2a2}
+#Content {display:none; background: url(img/bg.jpg); width: 450px; height: 450px;padding:30px; }
+#main { border: 2px solid rgba(163, 118, 92, 0.6);height:100%;width:100%;position: relative;}
+#LineList, #radiusList { width: 100%; height: 100%; position: relative; }
+#LineList div { position: absolute; background-color:rgba(163, 118, 92, 0.6); }
+#radiusList span { width: 14px; height: 14px; margin: -7px 0 0 -7px; position: absolute; opacity: 0; cursor: pointer; border-radius: 10px; }
+#radiusList span:hover{opacity:1;border:1px solid #f00;box-shadow:0 0 3px rgba(255,0,0,.4);}
+#radiusList { position: absolute; top: 0; left: 0; }
+#ChessList div { position: absolute; width: 28px; height: 28px; border-radius: 20px; margin: -14px 0 0 -14px; box-shadow: 0 0 3px rgba(163, 143, 41, 0.7) inset, 0.05em 0.05em 0.1em rgba(0, 0, 0, 0.6); }
+#ChessList div.white { background: radial-gradient(#fff, #fff 2px, #c0c0c0 18px); }
+#ChessList div.black { background: radial-gradient(#333, #000 18px); }
